@@ -4,7 +4,7 @@ import Layout from "../components/Layout";
 export default function About() {
   return (
       <Layout>
-          <div>Hello worlds Infex</div>
+          <div>Hello from about Pagee</div>
       </Layout>
   )
 }
