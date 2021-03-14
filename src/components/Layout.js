@@ -10,7 +10,7 @@ export default function Layout({ children }) {
             <DefaultAppBar />
             <Container maxWidth="md" >
                 {children}
-                <footer>@ Footer</footer>
+                {/* <footer>@ Footer</footer> */}
             </Container>
         </>
     )

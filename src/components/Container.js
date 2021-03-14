@@ -1,7 +1,8 @@
 import React from 'react';
 import { useStyles } from '../styles/container';
+import TopStory from './topStories';
 
-export default function SimpleContainer({ firstChild }) {
+export default function SimpleContainer({ firstChild, stories }) {
     const classes = useStyles();
     return (
         <div className={classes.mainWrap}>
@@ -9,16 +10,16 @@ export default function SimpleContainer({ firstChild }) {
                 {firstChild}
             </div>
             <div className={classes.second}>
-                Second
+                <TopStory story={stories[0]}/>
             </div>
             <div className={classes.third}>
-                Third
+                <TopStory story={stories[1]}/>
             </div>
             <div className={classes.forth}>
-                Fourth
+                <TopStory story={stories[2]}/>
             </div>
             <div className={classes.fifth}>
-                Fifth
+                <TopStory story={stories[3]}/>
             </div>
         </div >
     );
