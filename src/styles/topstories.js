@@ -4,7 +4,7 @@ export const useStyles = makeStyles((theme) => ({
     topstories: {
         padding: '8px',
         display: 'flex',
-        flexDirection: 'column',
+        flexDirection: 'column-reverse',
         [theme.breakpoints.up('sm')]: {
             flexDirection: 'row'
         },

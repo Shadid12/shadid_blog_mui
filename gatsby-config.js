@@ -6,5 +6,22 @@
 
 module.exports = {
   /* Your site config here */
-  plugins: ['gatsby-theme-material-ui'],
+  plugins: [
+    'gatsby-theme-material-ui',
+    {
+      resolve: `gatsby-source-filesystem`,
+      options: {
+        name: `pages`,
+        path: `${__dirname}/src/pages/`,
+      },
+    },
+    `gatsby-plugin-mdx`,
+    {
+      resolve: `gatsby-transformer-remark`,
+      options: {
+        plugins: [`gatsby-remark-prismjs`],
+      },
+    }
+  ],
+  
 }

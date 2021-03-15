@@ -12,7 +12,7 @@ export default function DefaultAppBar() {
   return (
     <div className={classes.root}>
       <AppBar position="static" className={classes.appbar}>
-      <Container maxWidth="md">
+      <Container maxWidth="lg">
         <Toolbar>
           <Typography variant="h6" className={classes.title} >
             <Link to="/" className={classes.link}>Shadid's Blog</Link>
