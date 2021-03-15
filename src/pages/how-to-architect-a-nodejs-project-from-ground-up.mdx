@@ -1,0 +1,402 @@
+---
+slug: "/how-to-architect-a-nodejs-project-from-ground-up"
+date: "2020-11-08"
+title: "How to Architect a Node.Js Project from Ground Up?"
+---
+
+import Layout from "../components/Layout";
+
+
+<Layout>
+<div className="wrap">
+<div className="contents">
+
+
+## How to Architect a Node.Js Project from Ground Up?
+
+[Originally published](https://blog.soshace.com/how-to-architect-a-node-js-project-from-ground-up/)
+
+In this article, we will discuss **how to architect a Node.js application** properly, and why it is important. Also, we’ll look at what **design decisions** can lead us to in creating a successful digital product. Maybe you are building a new Node.js application from scratch. Perhaps you would like to refactor your existing application, or perhaps you want to explore **Node.js application architecture** and learn about the best practices and patterns. Whatever the reason, this article will help you.
+
+## Why should you read this post?
+
+Well, it is true that there are many blog posts on the internet that cover this very subject. While there are some good articles on architecting Node.js projects, there are none that give you an in-depth explanation. Moreover, there are many blog posts that only elaborate on certain topics (i.e. layered architecture) but don’t tell you how everything fits together in an application. This is why I chose to write this article. I tried to research and compact all the information into one digestible piece so you don’t have to.
+
+We will briefly go over how to architect a Node.js application properly and discuss the reasoning behind all the design decisions while building an actual dummy application.
+
+We will discuss
+
+1. Folder structure
+2. Configuring environment variables
+3. MVC pattern (Model, View, Controller)
+4. Layered-architecture
+5. Encapsulating Configurations
+
+We will start with simple concepts and build on them. By the end of this article, you will be able to craft code that you are proud of.
+
+Excited? 🤩 Let’s get started!
+
+## Folder Structure
+
+The organization is important while building large scale projects. We define our folder structure in a way so that it is easy and obvious to find code pieces later. As developers, we often collaborate with others. A well-defined code structure allows us to easily collaborate on a project.
+
+Below is a sample folder structure that we have been using in my day job and it is working very well for us. We have delivered several successful projects with this structure.  We came up with this after many trials and errors. You are welcome to use this structure or modify it.
+
+![Folder Structure](https://soshace-12d3e.kxcdn.com/wp-content/uploads/2019/12/sample-folder-structure.jpg)
+
+Alright, let’s build our first hello world API endpoint. As we build our sample application we will be populating these folders with code logic.
+
+First, let’s take a look at our `server.js` file
+
+```js
+const http = require('http');
+const app = require('./app');
+
+const port = process.env.PORT || 3000;
+
+const server = http.createServer(app);
+
+server.listen(port);
+```
+Notice that we are requiring our `app.js` file. We will be writing all our app logic in `app.js`. It will be our main entry point for the app. Let’s take a quick look at the code.
+
+```js
+const express = require('express');
+const app = express();
+
+// routes
+app.use((req, res, next) => {
+    res.status(200).json({
+        message: 'Hello world!!!'
+    });
+});
+
+module.exports = app;
+```
+
+For now, we’ve only added a route in our `app.js`. The main reason for separating these two files is to encapsulate logic. Let’s take a look at the `npm` script that I am using to run this application.
+
+```js
+"scripts": {
+    "dev": "nodemon ./src/server.js"
+},
+```
+Please do make sure that you are able to run the application by doing `npm run dev`.
+
+## Let’s add resource routes
+
+I bet you are eager to create some more routes. Let’s do that now. We will be creating the following files in our `api/routes` folder.
+
+`api/routes/authors.js`
+
+`api/routes/books.js`
+
+Let’s just return some dummy JSON data from these routes.
+
+```js
+/**
+ * GET request to /books
+ */
+router.get('/', (req, res, next) => {
+    res.status(200).json({
+        message: 'All Books were fetched'
+    });
+});
+
+/**
+ * GET request to /books/:id
+ */
+router.get('/:id', (req, res, next) => {
+    res.status(200).json({
+        message: 'Book with id was fetch'
+    });
+});
+```
+You can do something similar for the author routes as well for now. Later in the post we will be discussing separation of concerns, and how we can architect our application with **model view controller pattern**. Before we do that, let’s cover one other important topic, setting up environment variables.
+
+## Configuring our environment variables
+
+As programmers, we often underestimate the importance of organizing and configuring environment variables.  It is important that our apps work in various environments. This could be your colleagues’ computer, in a server, in a docker container, or in some other cloud provider. Therefore, setting up environment variables is crucial while architecting a Node.js application.
+
+I am using `dotenv` library to manage environment variables in this application. First, I installed the library with `npm i install dotenv --save`. Then I created a  `.envfile` in the root directory. We add all of our environment variables in this `.env` file. Below is my sample `.env` setup.
+
+```sh
+PORT=3000
+API_URL=https://api.some/endpoint
+API_KEY=kkaskdwoopapsdowo
+MONGO_URL=
+```
+It is a good practice to gather our variables from `.env` file and map them into well-named variables and export them through a module. Let’s create a file `config/index.js`.
+
+```js
+const dotenv = require('dotenv');
+dotenv.config();
+module.exports = {
+  endpoint: process.env.API_URL,
+  masterKey: process.env.API_KEY,
+  port: process.env.PORT
+};
+```
+The main reason for doing this is to manage our environment variables in one place. For some reason, we may decide to have multiple `.env` files. For instance, we may decide to have a separate `.env` for deployment with docker. We may also have other configuration variables. We would like to manage these variables efficiently that’s why we are following this convention.
+
+Alright, now let’s see how we can import these variables into `server.js`
+
+```js
+const http = require('http');
+const app = require('./app');
+const { port } = require('./config');
+ 
+const server = http.createServer(app);
+ 
+server.listen(port);
+```
+We have set up our environment variables. Let’s dive into the **model-view-controller pattern** now.
+
+## Model-View-Controller Pattern
+
+![MVC pattern](https://soshace-12d3e.kxcdn.com/wp-content/uploads/2019/12/mvc-1.jpg)
+
+Modern web applications are big and complex. To reduce complexity we use the Separation of responsibility principle (SRP). Using SRP ensures loose coupling, maintainability, and testability. MVC pattern embodies this philosophy of separation of responsibility. Let’s take a look at the different parts of MVC.
+
+**Model:**
+
+Model components are responsible for application’s data domain. Model objects are responsible for storing, retrieving, and updating data from the database.
+
+**View:** 
+
+It is the user interface of our application. In most modern web applications, the view layer is usually replaced by another single page application, for example, a React.js or an Angular application.
+
+**Controllers:**
+
+They are responsible for handling user interaction. They interact with models to retrieve information and ultimately respond to user requests. In smaller applications, controllers can hold business logic. However, it is not good practice for larger application; we will look into a layered architecture later in this article to further elaborate on why this is.
+
+Now, let’s take a look at how we can add this pattern to our application. I will be using `mongodb` as our database for this demo. I have created a new controller and a model to implement this pattern. First, let’s take a look at the author model.
+
+```js
+const mongoose = require('mongoose');
+const authorSchema = mongoose.Schema({
+    _id: mongoose.Schema.Types.ObjectId,
+    name: { type: String, required: true },
+    books: { type: Object, required: false }
+});
+module.exports = mongoose.model('Author', authorSchema);
+```
+We are defining our database-related schemas in the model as well. The controllers will deal with all the fetching and business logic for now. So let’s take a look at the controller.
+
+```js
+module.exports = {
+    createAuthor: async (name) => {
+        const author = new Author({
+            _id: new mongoose.Types.ObjectId(),
+            name: name
+        });
+        try {
+            const newAuthorEntry = await author.save()
+            return newAuthorEntry; 
+        } catch (error) {
+            throw error
+        }
+    },
+
+    getAuthor: async (id) => {
+        // ..
+    },
+
+    getAllAuthors: async() => {
+        // ...
+    }
+}
+```
+
+Now we can slim down our router as follows:
+
+```js
+/**
+ * POST create /author
+ */
+router.post("/", async (req, res, next) => {
+    const author = await authorController.createAuthor(req.body.name)
+    res.status(201).json({
+        message: "Created successfully",
+        author
+    })
+});
+```
+
+Using this pattern separates our concerns and keeps the code clean, organized and testable. Our components are now following the single responsibility principle. For instance, our routes are only responsible for returning a response; controllers handle most of the business logic and models take care of the data layer.
+
+### Note: To get the code up to this point please check the following github repo:
+[click here](https://github.com/Shadid12/starter_node/tree/part-2)
+
+Let’s say our business requirement has changed. Now, when we are adding a new author, we have to check if they have any best selling titles and whether the author is self-published or he/she belongs to a certain publication. So now if we start implementing this logic in our controllers things, begin to look rather messy.
+
+Looks at the code below, for instance:
+
+```js
+createAuthor: async (name) => {
+        const author = new Author({
+            _id: new mongoose.Types.ObjectId(),
+            name: name
+        });
+        try {
+            // cehck if author is best-seller
+            const isBestSeller = await axios.get('some_third_part_url');
+            // if best seller do we have that book in our store 
+            if(isBestSeller) {
+                // Run Additional Database query to figure our
+                //...
+                //if not send library admin and email 
+                //...
+                // other logic and such
+            }
+            const newAuthorEntry = await author.save()
+            return newAuthorEntry; 
+        } catch (error) {
+            throw error
+        }
+},
+```
+
+Now, this controller becomes responsible for doing multiple actions, this makes it harder to test, messy, and it is breaking the **Single Responsibility Principle**. 
+
+How do we solve this problem? With the **layered architecture**!
+
+## Layered Architecture for Node.js
+
+We want to apply **the separation of concerns principle** and move our business logic away from our controllers. We will create small service functions that will be called from our controllers. These services are responsible for doing one thing only, so in this way, our business logic is encapsulated. That way, if, in the future, requirements changes, we will only need to change certain service functions, and it will prevent any domino effects. With layered architecture, we build applications that are agile and allow changes to be introduced very easily when necessary. This architecture is also referred to as a **3-layer-architecture.**
+
+Here’s a visual breakdown of what we are about to do:
+
+![3 layer architecture](https://soshace-12d3e.kxcdn.com/wp-content/uploads/2019/12/3-layer-architecture.jpg)
+
+Alright so let’s break down our previous controller to use this architecture.  To start, we will need to create services to handle specific events.
+
+```js
+createAuthor: async (name) => {
+        const author = new Author({
+            _id: new mongoose.Types.ObjectId(),
+            name: name
+        });
+        try {
+            await AuthorService.checkauthorSalesStatus();
+            await BookService.checkAvailableBooksByAuthor(name);
+            const newAuthorEntry = await author.save();
+            return newAuthorEntry; 
+        } catch (error) {
+            throw error
+        }
+},
+```
+
+Notice that service functions are designed to do one specific task. This way, our services are encapsulated, testable, and open to future changes without any major side effects.
+
+## Encapsulating Configurations
+
+We write a fair amount of configuration code in our Node.js application. These usually run when the application boots up. It is good practice to have these encapsulated inside a function. This will allow us to track these files better and debug them if necessary.
+
+Let’s elaborate on this with an example. Below we have our `app.js` file
+
+```js
+const express = require('express');
+const app = express();
+const mongoose = require('mongoose');
+const { mongoUrl } = require('./config');
+const bodyParser = require('body-parser');
+ 
+//routes 
+const authorsRoutes = require('./api/routes/authors');
+const booksRoutes = require('./api/routes/books');
+ 
+mongoose.connect(mongoUrl, { useNewUrlParser: true });
+mongoose.Promise = global.Promise;
+ 
+app.use(bodyParser.urlencoded({ extended: false }));
+app.use(bodyParser.json());
+ 
+app.use((req, res, next) => {
+    res.header("Access-Control-Allow-Origin", "*");
+    res.header(
+      "Access-Control-Allow-Headers",
+      "Origin, X-Requested-With, Content-Type, Accept, Authorization"
+    );
+    if (req.method === "OPTIONS") {
+      res.header("Access-Control-Allow-Methods", "PUT, POST, PATCH, DELETE, GET");
+      return res.status(200).json({});
+    }
+    next();
+});
+ 
+app.use('/authors', authorsRoutes);
+app.use('/books', booksRoutes);
+ 
+module.exports = app;
+```
+We have a couple of things that are just configuration code. For instance, database connection, body parser, and cors setup are all server configuration code. We can move them into their own separate functions inside `config` folder.
+
+
+```js
+const mongoose = require('mongoose');
+const { mongoUrl } = require('./index');
+ 
+module.exports = {
+    initializeDB: async () => {
+        mongoose.connect(mongoUrl, { useNewUrlParser: true });
+        mongoose.Promise = global.Promise;
+    },
+ 
+    cors: async (req, res, next) => {
+        res.header("Access-Control-Allow-Origin", "*");
+        res.header(
+        "Access-Control-Allow-Headers",
+        "Origin, X-Requested-With, Content-Type, Accept, Authorization"
+        );
+        if (req.method === "OPTIONS") {
+        res.header("Access-Control-Allow-Methods", "PUT, POST, PATCH, DELETE, GET");
+        return res.status(200).json({});
+        }
+        next();
+    }
+}
+```
+And now we can use those functions in our `app.js`
+
+```js
+const express = require('express');
+const app = express();
+const bodyParser = require('body-parser');
+const config = require('./config/init')
+ 
+//routes 
+const authorsRoutes = require('./api/routes/authors');
+const booksRoutes = require('./api/routes/books');
+ 
+ 
+app.use(bodyParser.urlencoded({ extended: false }));
+app.use(bodyParser.json());
+ 
+app.use(config.cors);
+ 
+app.use('/authors', authorsRoutes);
+app.use('/books', booksRoutes);
+ 
+module.exports = app;
+```
+And that’s it. Our `app.js` is now looking much cleaner.
+
+Finally, here are the key points to keep in mind for a Node.js project architecture:
+
+1. **Apply proper folder structure:** It allows us to easily locate files and code. Also enables better collaboration with the team;
+
+2. **Configuring environment variables:** Configure and manage environment variables properly to avoid deployment;
+
+3. **MVC pattern (Model, View, Controller):** Apply MVC pattern to decouple, testable, and maintainable code;
+
+4. **Layered Architecture:** Apply layered architecture to separate your concerns. Use services extensively to encapsulate your business logic;
+
+5. **Encapsulating Configurations:** Separate configuration code from application logic.
+
+We briefly went over the core concepts of Node.js project architecture. I hope this article was helpful to you and gave you some insights on how to architect your own project. I would love to hear what you think about this blog post. Please share your thoughts in the comment, if you enjoyed reading this please like and share. Until next time!
+
+</div>
+</div>
+</Layout>

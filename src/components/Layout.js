@@ -12,6 +12,7 @@ import CodeBlock from './CodeBlock';
 const components = {
     h1: props => <Typography variant="h1" component="h2" gutterBottom {...props}/>,
     h2: props => <Typography variant="h2" gutterBottom {...props}/>,
+    p: props => <Typography variant="body1" gutterBottom {...props} style={{ fontSize: '20px' }}/>,
     pre: props => <div {...props} />,
     code: CodeBlock
 }
