@@ -2,7 +2,7 @@ import { makeStyles } from '@material-ui/core/styles';
 
 export const useStyles = makeStyles((theme) => ({
     mainWrap: {
-        // padding: '20px 24px',
+        padding: '20px 24px',
         display: 'grid',
         gridTemplateColumns: 'auto auto auto auto',
         gridTemplateRows: 'auto',
